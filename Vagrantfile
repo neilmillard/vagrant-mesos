@@ -52,6 +52,8 @@ Vagrant.configure(2) do |config|
       cfg.vm.provision :shell , :inline => <<-MESOSCRIPT
         sudo rpm -Uvh http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm
         sudo yum -y install mesos ruby
+        systemctl stop firewalld
+        systemctl disable firewalld
         MESOSCRIPT
 
       cfg.vm.provider :virtualbox do |vb, override|
@@ -107,6 +109,8 @@ Vagrant.configure(2) do |config|
 
       if master?(ninfo[:hostname]) then
         zkstring = "zk://"+ninfos[:zk].map{|zk| zk[:ip]+":2181"}.join(", ")+"/mesos"
+        # mesos master
+        cfg.vm.network :forwarded_port, guest: 5050, guest_ip: ninfo[:ip], host: 5050, auto_correct: true
         cfg.vm.provision :shell , :inline => <<-CONFIG
           sudo yum -y install marathon mesosphere-zookeeper
           sudo echo #{zkstring} > /etc/mesos/zk
@@ -155,6 +159,8 @@ Vagrant.configure(2) do |config|
         override.vm.hostname = "marathon"
         override.vm.network :private_network, :ip => marathon_ip
         override.vm.provision :hosts
+        # marathon
+        override.vm.network :forwarded_port, guest: 8080, guest_ip: marathon_ip, host: 8080, auto_correct: true
 
         vb.name = 'vagrant-mesos-' + "marathon"
         vb.customize ["modifyvm", :id, "--memory", conf["marathon_mem"], "--cpus", conf["marathon_cpus"] ]
