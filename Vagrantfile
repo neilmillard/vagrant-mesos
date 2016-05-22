@@ -111,6 +111,7 @@ Vagrant.configure(2) do |config|
         zkstring = "zk://"+ninfos[:zk].map{|zk| zk[:ip]+":2181"}.join(", ")+"/mesos"
         # mesos master
         cfg.vm.network :forwarded_port, guest: 5050, guest_ip: ninfo[:ip], host: 5050, auto_correct: true
+		cfg.vm.network :forwarded_port, guest: 8080, guest_ip: ninfo[:ip], host: 8080, auto_correct: true
         cfg.vm.provision :shell , :inline => <<-CONFIG
           sudo yum -y install marathon mesosphere-zookeeper
           sudo echo #{zkstring} > /etc/mesos/zk
@@ -203,10 +204,14 @@ Vagrant.configure(2) do |config|
       end
 
       cfg.vm.provision :shell, :privileged => true, :inline => <<-SCRIPT
+        sudo rpm -Uvh http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm
+        sudo yum -y install mesos ruby
+        systemctl stop firewalld
+        systemctl disable firewalld
         sudo yum -y install marathon
         mkdir -p /var/log/marathon
         kill -KILL `ps augwx | grep marathon | tr -s " " | cut -d' ' -f2`
-        LIBPROCESS_IP=#{marathon_ip} nohup /opt/marathon/bin/start --master #{"zk://"+ninfos[:zk].map{|zk| zk[:ip]+":2181"}.join(",")+"/mesos"} --zk_hosts #{ninfos[:zk].map{|zk| zk[:ip]+":2181"}.join(",")} --event_subscriber http_callback > /var/log/marathon/nohup.log 2> /var/log/marathon/nohup.log < /dev/null &
+        LIBPROCESS_IP=#{marathon_ip} nohup /bin/marathon --master #{"zk://"+ninfos[:zk].map{|zk| zk[:ip]+":2181"}.join(",")+"/mesos"} --zk_hosts #{ninfos[:zk].map{|zk| zk[:ip]+":2181"}.join(",")} --event_subscriber http_callback > /var/log/marathon/nohup.log 2> /var/log/marathon/nohup.log < /dev/null &
         SCRIPT
 
       if conf["chronos_enable"] then
