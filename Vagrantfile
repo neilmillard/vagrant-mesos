@@ -113,7 +113,8 @@ Vagrant.configure(2) do |config|
         cfg.vm.network :forwarded_port, guest: 5050, guest_ip: ninfo[:ip], host: 5050, auto_correct: true
 		cfg.vm.network :forwarded_port, guest: 8080, guest_ip: ninfo[:ip], host: 8080, auto_correct: true
         cfg.vm.provision :shell , :inline => <<-CONFIG
-          sudo yum -y install marathon mesosphere-zookeeper
+          sudo yum -y install marathon
+          # mesosphere-zookeeper
           sudo echo #{zkstring} > /etc/mesos/zk
           sudo echo "#{(ninfos[:master].length.to_f/2).ceil}" > /etc/mesos-master/quorum
           systemctl stop mesos-slave.service
