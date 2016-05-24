@@ -108,31 +108,18 @@ Vagrant.configure(2) do |config|
         cfg.vm.provision :shell, :inline => "mkdir -p #{master_work_dir}"
       end
 
-      # marathon doesn't either.
-      marathon_conf_dir = "/etc/marathon/conf"
-      if master?(ninfo[:hostname]) then
-        cfg.vm.provision :shell, :inline => "mkdir -p #{marathon_conf_dir}"
-      end
-
       zkstring = "zk://"+ninfos[:zk].map{|zk| zk[:ip]+":2181"}.join(", ")
       if master?(ninfo[:hostname]) then
         # mesos master
         cfg.vm.network :forwarded_port, guest: 5050, guest_ip: ninfo[:ip], host: 5050, auto_correct: true
-		cfg.vm.network :forwarded_port, guest: 8080, guest_ip: ninfo[:ip], host: 8080, auto_correct: true
         cfg.vm.provision :shell , :inline => <<-CONFIG
-          sudo yum -y install marathon
-          # mesosphere-zookeeper
           sudo echo "#{zkstring}/mesos" > /etc/mesos/zk
           sudo echo "#{(ninfos[:master].length.to_f/2).ceil}" > /etc/mesos-master/quorum
           sudo echo #{ninfo[:ip]} > /etc/mesos-master/hostname
           sudo echo #{ninfo[:ip]} > /etc/mesos-master/ip
-          sudo echo "#{zkstring}/mesos" > /etc/marathon/conf/master
-          sudo echo "#{zkstring}/marathon" > /etc/marathon/conf/zk
-          sudo echo #{ninfo[:ip]} > /etc/marathon/conf/hostname
           sudo systemctl stop mesos-slave
           sudo systemctl disable mesos-slave
           sudo systemctl restart mesos-master
-          sudo systemctl restart marathon
         CONFIG
       elsif slave?(ninfo[:hostname]) then
         cfg.vm.provision :shell , :inline => <<-CONFIG
@@ -149,7 +136,6 @@ Vagrant.configure(2) do |config|
         myid = (/zk([0-9]+)/.match ninfo[:hostname])[1]
         cfg.vm.provision :shell, :inline => <<-SCRIPT
           sudo yum -y install mesosphere-zookeeper
-          # marathon # moved to masters
           sudo echo #{myid} > /var/lib/zookeeper/myid
           sudo ruby /vagrant/scripts/gen_zoo_conf.rb > /etc/zookeeper/conf/zoo.cfg
           sudo systemctl stop mesos-master
@@ -221,16 +207,19 @@ Vagrant.configure(2) do |config|
           HOSTNAME=$PUBLIC_DNS  # Fix the bash built-in hostname variable too
           SCRIPT
       end
-
+      zkstring = "zk://"+ninfos[:zk].map{|zk| zk[:ip]+":2181"}.join(", ")
       cfg.vm.provision :shell, :privileged => true, :inline => <<-SCRIPT
         sudo rpm -Uvh http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm
         sudo yum -y install mesos ruby
         systemctl stop firewalld
         systemctl disable firewalld
+        sudo mkdir -p /etc/marathon/conf
+        sudo mkdir -p /var/log/marathon
+        sudo echo "#{zkstring}/mesos" > /etc/marathon/conf/master
+        sudo echo "#{zkstring}/marathon" > /etc/marathon/conf/zk
+        sudo echo #{marathon_ip} > /etc/marathon/conf/hostname
         sudo yum -y install marathon
-        mkdir -p /var/log/marathon
-        kill -KILL `ps augwx | grep marathon | tr -s " " | cut -d' ' -f2`
-        LIBPROCESS_IP=#{marathon_ip} nohup /bin/marathon --master #{"zk://"+ninfos[:zk].map{|zk| zk[:ip]+":2181"}.join(",")+"/mesos"} --zk_hosts #{ninfos[:zk].map{|zk| zk[:ip]+":2181"}.join(",")} --event_subscriber http_callback > /var/log/marathon/nohup.log 2> /var/log/marathon/nohup.log < /dev/null &
+        sudo systemctl restart marathon
         SCRIPT
 
       if conf["chronos_enable"] then

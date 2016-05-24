@@ -4,7 +4,7 @@ mesos_version: "0.22.1"
 # The numbers of servers
 ##############################
 zk_n: 1          # hostname will be zk1, zk2, …
-master_n: 2      # hostname will be master1,master2,…
+master_n: 1      # hostname will be master1,master2,… try to be odd.
 slave_n: 2      # hostname will be slave1,slave2,…
 
 # Memory and Cpus setting(only for virtualbox)
@@ -25,7 +25,7 @@ master_ipbase: "192.168.11."
 slave_ipbase : "192.168.12."
 
 # experimental frameworks
-marathon_enable: false
+marathon_enable: true
 marathon_mem   : 512
 marathon_cpus  : 1
 marathon_ipbase: "192.168.3."
