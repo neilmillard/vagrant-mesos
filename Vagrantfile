@@ -114,8 +114,8 @@ Vagrant.configure(2) do |config|
         cfg.vm.provision :shell, :inline => "mkdir -p #{marathon_conf_dir}"
       end
 
+      zkstring = "zk://"+ninfos[:zk].map{|zk| zk[:ip]+":2181"}.join(", ")
       if master?(ninfo[:hostname]) then
-        zkstring = "zk://"+ninfos[:zk].map{|zk| zk[:ip]+":2181"}.join(", ")
         # mesos master
         cfg.vm.network :forwarded_port, guest: 5050, guest_ip: ninfo[:ip], host: 5050, auto_correct: true
 		cfg.vm.network :forwarded_port, guest: 8080, guest_ip: ninfo[:ip], host: 8080, auto_correct: true
@@ -124,22 +124,21 @@ Vagrant.configure(2) do |config|
           # mesosphere-zookeeper
           sudo echo "#{zkstring}/mesos" > /etc/mesos/zk
           sudo echo "#{(ninfos[:master].length.to_f/2).ceil}" > /etc/mesos-master/quorum
-          sudo echo #ninfo[:ip] > /etc/mesos-master/hostname
-          sudo echo #ninfo[:ip] > /etc/mesos-master/ip
+          sudo echo #{ninfo[:ip]} > /etc/mesos-master/hostname
+          sudo echo #{ninfo[:ip]} > /etc/mesos-master/ip
           sudo echo "#{zkstring}/mesos" > /etc/marathon/conf/master
           sudo echo "#{zkstring}/marathon" > /etc/marathon/conf/zk
-          sudo echo #ninfo[:ip] > /etc/marathon/conf/hostname
+          sudo echo #{ninfo[:ip]} > /etc/marathon/conf/hostname
           sudo systemctl stop mesos-slave
           sudo systemctl disable mesos-slave
           sudo systemctl restart mesos-master
           sudo systemctl restart marathon
         CONFIG
       elsif slave?(ninfo[:hostname]) then
-        zkstring = "zk://"+ninfos[:zk].map{|zk| zk[:ip]+":2181"}.join(", ")+"/mesos"
         cfg.vm.provision :shell , :inline => <<-CONFIG
-          sudo echo #{zkstring} > /etc/mesos/zk
-          sudo echo #ninfo[:ip] > /etc/mesos-slave/ip
-          sudo echo #ninfo[:ip] > /etc/mesos-slave/hostname
+          sudo echo "#{zkstring}/mesos" > /etc/mesos/zk
+          sudo echo #{ninfo[:ip]} > /etc/mesos-slave/ip
+          sudo echo #{ninfo[:ip]} > /etc/mesos-slave/hostname
           sudo systemctl stop mesos-master
           sudo systemctl disable mesos-master
           sudo systemctl restart mesos-slave
