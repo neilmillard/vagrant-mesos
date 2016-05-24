@@ -49,6 +49,7 @@ Vagrant.configure(2) do |config|
 
       ## to install on centos 7
       # Add the repository
+      # install mesos - https://open.mesosphere.com/reference/packages/
       cfg.vm.provision :shell , :inline => <<-MESOSCRIPT
         sudo rpm -Uvh http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm
         sudo yum -y install mesos ruby
@@ -117,18 +118,19 @@ Vagrant.configure(2) do |config|
           # mesosphere-zookeeper
           sudo echo #{zkstring} > /etc/mesos/zk
           sudo echo "#{(ninfos[:master].length.to_f/2).ceil}" > /etc/mesos-master/quorum
-          systemctl stop mesos-slave.service
-          systemctl disable mesos-slave.service
-          sudo service mesos-master restart
-          sudo service marathon restart
+          sudo echo #ninfo[:ip] > /etc/mesos-master/hostname
+          sudo systemctl stop mesos-slave
+          sudo systemctl disable mesos-slave
+          sudo systemctl restart mesos-master
+          sudo systemctl restart marathon
         CONFIG
       elsif slave?(ninfo[:hostname]) then
         zkstring = "zk://"+ninfos[:zk].map{|zk| zk[:ip]+":2181"}.join(", ")+"/mesos"
         cfg.vm.provision :shell , :inline => <<-CONFIG
           sudo echo #{zkstring} > /etc/mesos/zk
-          sudo systemctl stop mesos-master.service
-          sudo systemctl disable mesos-master.service
-          sudo service mesos-slave restart
+          sudo systemctl stop mesos-master
+          sudo systemctl disable mesos-master
+          sudo systemctl restart mesos-slave
         CONFIG
       end
 
