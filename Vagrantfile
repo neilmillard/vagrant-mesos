@@ -119,6 +119,7 @@ Vagrant.configure(2) do |config|
           sudo echo #{zkstring} > /etc/mesos/zk
           sudo echo "#{(ninfos[:master].length.to_f/2).ceil}" > /etc/mesos-master/quorum
           sudo echo #ninfo[:ip] > /etc/mesos-master/hostname
+          sudo echo #ninfo[:ip] > /etc/mesos-master/ip
           sudo systemctl stop mesos-slave
           sudo systemctl disable mesos-slave
           sudo systemctl restart mesos-master
@@ -140,6 +141,10 @@ Vagrant.configure(2) do |config|
           sudo yum -y install marathon mesosphere-zookeeper
           sudo echo #{myid} > /var/lib/zookeeper/myid
           sudo ruby /vagrant/scripts/gen_zoo_conf.rb > /etc/zookeeper/conf/zoo.cfg
+          sudo systemctl stop mesos-master
+          sudo systemctl disable mesos-master
+          sudo systemctl stop mesos-slave
+          sudo systemctl disable mesos-slave
           sudo systemctl start zookeeper
         SCRIPT
       end
