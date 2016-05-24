@@ -218,6 +218,8 @@ Vagrant.configure(2) do |config|
         sudo echo "#{zkstring}/mesos" > /etc/marathon/conf/master
         sudo echo "#{zkstring}/marathon" > /etc/marathon/conf/zk
         sudo echo #{marathon_ip} > /etc/marathon/conf/hostname
+        #fix to remove localhost binding when on separate node to mesos master
+        sudo sed -i '/127.0.1.1 marathon/d' /etc/hosts
         sudo yum -y install marathon
         sudo systemctl restart marathon
         SCRIPT
