@@ -2,6 +2,8 @@
 # vi: set ft=ruby :
 require 'yaml'
 require 'erb'
+
+
 base_dir = File.expand_path(File.join(File.dirname(__FILE__), ".."))
 require File.join(base_dir, "lib", "gen_node_infos.rb")
 

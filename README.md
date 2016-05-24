@@ -46,9 +46,9 @@ slave_cpus : 2
 # When ec2, this should be matched with
 # private addresses defined by subnet_id below.
 ################################################
-zk_ipbase    : "172.31.0."
-master_ipbase: "172.31.1."
-slave_ipbase : "172.31.2."
+zk_ipbase    : "192.168.10."
+master_ipbase: "192.168.11."
+slave_ipbase : "192.168.12."
 ```
 
 ### Launch Cluster
@@ -61,9 +61,9 @@ $ vagrant up
 
 At default setting, after all the boxes are up, you can see services running at:
 
-* Mesos web UI on: <http://172.31.1.11:5050>
-* [Marathon](https://github.com/mesosphere/marathon) web UI on: <http://172.31.3.11:8080>
-* [Chronos](https://github.com/mesos/chronos) web UI on: <http://172.31.3.11:8081>
+* Mesos web UI on: <http://192.168.11.11:5050>
+* [Marathon](https://github.com/mesosphere/marathon) web UI on: <http://192.168.3.11:8080>
+* [Chronos](https://github.com/mesos/chronos) web UI on: <http://192.168.3.11:8081>
 
 #### Destroy Cluster
 this operations all VM instances forming the cluster.
